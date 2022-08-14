@@ -1,23 +1,17 @@
 ﻿#coding=utf_8
-from cProfile import label
-from email.mime import image
-from hashlib import algorithms_available
+
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
 from tkinter.filedialog import askopenfilename
 from turtle import left
 import pandas as pd
-import geocoder
-import geopy
 import tkintermapview
-
 
 root = Tk()
 x ='SEM ARQUIVO'
 
 #FUNÇÕES
 def subir_arquivo():
-    global df1
     global x
     x = filedialog.askopenfilename()
     Lb_arq['text'] = x
@@ -28,8 +22,6 @@ def limpar():
 #TIM CHAMADAS
 def tim_chamadas():
     limpar()
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_colwidth', None)
     global dff
     global x
     
@@ -85,6 +77,7 @@ def tim_ch_imei():
 def tim_ch_loc():
     global dff
     limpar()
+
     #importação conexões
     df1 = pd.read_excel(f'{x}',sheet_name=1)
     df1 = df1.drop(columns=['REGISTRO','CENTRAL','REDIRECIONADO PARA','ÚLTIMA CGI/ERB','HORA BRASÍLIA','TIPO'])
@@ -156,8 +149,6 @@ def tim_mapa():
 #TIM IP
 def tim_ip():
     limpar()
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_colwidth', None)
     global x
     global dff
 
@@ -184,16 +175,14 @@ def tim_ip_loc():
     dff = dff.reset_index()
 
 def tim_ip_mapa():
+
     #importações
     antenas = pd.read_excel(f'{x}',sheet_name=3)
     antenas
+    
     #remover dados com '.'
     a_remover = antenas.loc[(antenas['LATITUDE'] == '.') | (antenas['LONGITUDE'] == '.')]
     antenas = antenas.drop(a_remover.index).dropna()
-    antenas
-
-    # antenas['LATITUDE'] = antenas['LATITUDE'].astype(str)
-    # antenas['LONGITUDE'] = antenas['LONGITUDE'].astype(str)
     antenas['LATITUDE'] = antenas['LATITUDE'].str.replace(',', '.')
     antenas['LONGITUDE'] = antenas['LONGITUDE'].str.replace(',', '.')
     df_dados = pd.DataFrame(antenas.value_counts())
@@ -217,11 +206,9 @@ def tim_ip_mapa():
 #VIVO CHAMADAS
 def vivo_chamadas():
     limpar()
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_colwidth', None)
-    
     global dff
     global x
+    
     #importação chamadas
     df1 = pd.read_excel(f'{x}', header=5)
     df1 = df1.drop(columns=['Desc','IMEI Chamado','IMEI Chamador','Hora desc','Status','Tra','Durac','GMT Origem', 'GMT Destino','Tec Origem','Tec Destino'])
@@ -230,7 +217,7 @@ def vivo_chamadas():
     # planilha das antenas
     df2 = pd.read_excel(f'{x}',sheet_name=2, header=5)
     df2 = df2.drop(columns=['CCC','Sigla','ERB','Sigla.1','Set','Tecnologia'])
-    df2['dados'] = df2['Endereço']+', '+df2['Bairro']+', '+df2['Cidade']+', '+df2['UF']#+' - Azimute '+df2['Azi']
+    df2['dados'] = df2['Endereço']+', '+df2['Bairro']+', '+df2['Cidade']+', '+df2['UF']
 
     # planilha mesclada chamado
     df3 = df1.merge(df2[['CGI','dados']], on='CGI', how='left') 
@@ -262,7 +249,7 @@ def vivo_ch_imei():
     c = pd.DataFrame(data=z, columns=['Reincidencia'])
     c = c.reset_index()
     alvo = c.iloc[0,0]
-    
+        
     #identificando imeis
     df10 = pd.read_excel(f'{x}',header=5)
     df10['IMEI Chamador'] = df10['IMEI Chamador'].astype(str)
@@ -319,31 +306,20 @@ def vivo_mapa():
     x = x.rename(columns={0:'Reincidência'})
     x = x.reset_index()
     MaiRei = x.iloc[0,0]
-        
-    #transformando código end em coo
-    plan_con = []
-    for i in EndCon_uni.itertuples():
-        codigo = geocoder.osm(i)
-        codigo_fim = [codigo.lat, codigo.lng]
-        plan_con.append(codigo_fim)
             
-    plan_coo = pd.DataFrame(plan_con).dropna()
-    plan_coo = plan_coo.rename(columns={0:'LAT',1:"LON"})
-    
     my_map = Toplevel(root)
     map = tkintermapview.TkinterMapView(my_map, width=1000,height=700, corner_radius=0)
     map.pack()
-    map.set_address(MaiRei, marker=True) #posição inicial
+    map.set_address(MaiRei, marker=True, text='MAIOR REINCIDÊNCIA') #posição inicial
     map.set_zoom(100)
-    for i in plan_coo.itertuples():
-        map.set_marker(i.LAT, i.LON, marker_color_circle='black', marker_color_outside='darkblue')
-    map.set_marker(encod.lat, encod.lng, text='MAIOR REINCIDÊNCIA')
+    for i in EndCon_uni.itertuples():
+        map.set_address(i, marker_color_circle='black', marker_color_outside='darkblue',marker=True, text='')
+
     print(MaiRei)
+    
 #CLARO CHAMADAS
 def claro_chamadas():
     limpar()
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_colwidth', None)
     global x
     global dff
 
@@ -458,6 +434,7 @@ def claro_sc_ch():
     global dff
     global x
     limpar()
+
     #importação planilha dados de loc
     df1 = pd.read_excel(f'{x}')
     df1 = df1.drop(columns=['SiteID RE','Raio RE','Rota Entrada','SiteID RS','SetorID RS', 'Raio RS','Rota Saída','Central','Tipo Registro','Tipo Rota'])
@@ -496,6 +473,7 @@ def claro_sc_imei():
     global x
     global dff
     limpar()
+
     dff = pd.read_excel(f'{x}')
     q = dff['Número A']
     y = dff['Número B']
@@ -515,7 +493,6 @@ def claro_sc_mapa():
     global dff
         
     dff = pd.read_excel(f'{x}')
-
     q = dff['Número A']
     y = dff['Número B']
     z = pd.DataFrame(pd.concat([q,y])).value_counts()
@@ -558,6 +535,7 @@ def claro_ip():
     limpar()
     global x
     global dff
+
     dff = pd.read_excel(f'{x}')
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_colwidth', None)
@@ -567,6 +545,7 @@ def claro_ip_loc():
     limpar()
     global x
     global dff
+
     dff = pd.read_excel(f'{x}')
     dff = pd.DataFrame((dff['Endereço ERB RS'] + ', ' + dff['Município ERB RS']).value_counts())
     dff = dff.reset_index()
@@ -575,14 +554,13 @@ def claro_ip_imei():
     limpar()
     global x
     global dff
+
     dff = pd.read_excel(f'{x}')
     dff = pd.DataFrame(dff['IMEI A'].unique())
            
 #VIVO IP
 def vivo_IP():
     limpar()
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_colwidth', None)
     global dff
     global x
 
@@ -599,6 +577,7 @@ def vivo_ip_loc():
     limpar()
     global dff
     vivo_IP()
+
     dff = pd.DataFrame(dff['Endereço'].value_counts())
     dff = dff.reset_index()
 
@@ -628,8 +607,6 @@ def vivo_ip_mapa():
     for i in dff.itertuples():
         map.set_address(i, marker_color_circle='black', marker_color_outside='darkblue',marker=True, text='')
     
-    
-
 #config inicial
 root.title('Desenvolvido por DANIEL ROQUE')
 root.geometry('1195x700')
